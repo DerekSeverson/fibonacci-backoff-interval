@@ -1,0 +1,40 @@
+{
+  "name": "fibonacci-backoff-interval",
+  "version": "1.0.0",
+  "description": "Fibonacci Backoff Interval with Promises ",
+  "main": "index.js",
+  "scripts": {
+    "test": "node_modules/.bin/istanbul cover node_modules/.bin/_mocha || true",
+    "debug": "node_modules/.bin/mocha --inspect --debug-brk || true"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DerekSeverson/fibonacci-backoff-interval.git"
+  },
+  "keywords": [
+    "fibonacci",
+    "backoff",
+    "interval",
+    "promise"
+  ],
+  "files": [
+    "index.js"
+  ],
+  "author": "Derek Severson",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/DerekSeverson/fibonacci-backoff-interval/issues"
+  },
+  "homepage": "https://github.com/DerekSeverson/fibonacci-backoff-interval#readme",
+  "dependencies": {
+    "backoff": "^2.5.0",
+    "bluebird": "^3.5.0",
+    "debug": "^2.6.3"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "istanbul": "^0.4.5",
+    "mocha": "^3.2.0",
+    "sinon": "^2.0.0"
+  }
+}
