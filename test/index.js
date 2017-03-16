@@ -179,3 +179,112 @@ describe ('status', function () {
       });
   });
 });
+
+describe ('supports promises', function () {
+
+  it ('functions that resolve', function () {
+    let obj = Math.random();
+    let ctx = backoff(() => Promise.resolve(obj))
+    let spy = sinon.spy();
+    ctx.on('resolved', spy);
+
+    return Promise.delay(150)
+      .then(() => {
+        assert(spy.calledOnce, 'called once');
+      })
+      .delay(100)
+      .then(() => {
+        assert(spy.calledTwice, 'called twice');
+      })
+      .delay(100)
+      .then(() => {
+        assert(spy.calledThrice, 'called thrice');
+        ctx.stop();
+      })
+      .then(() => {
+        assert(spy.alwaysCalledWithExactly(obj, ctx), '"resolved" listener always called with resolved value and ctx');
+      })
+      .delay(250)
+      .then(() => {
+        debug('assert: not called again after stop called');
+        assert(spy.calledThrice, 'not called again after stop called');
+      });
+  });
+
+  it ('functions that reject', function () {
+    let err = new Error('Backoff');
+    let ctx = backoff(() => Promise.reject(err))
+    let spy = sinon.spy();
+    ctx.on('rejected', spy);
+
+    return Promise.delay(150)
+      .then(() => {
+        assert(spy.calledOnce, 'called once');
+      })
+      .delay(100)
+      .then(() => {
+        assert(spy.calledTwice, 'called twice');
+      })
+      .delay(200)
+      .then(() => {
+        assert(spy.calledThrice, 'called thrice');
+        ctx.stop();
+      })
+      .then(() => {
+        assert(spy.alwaysCalledWithExactly(err, ctx), '"rejected" listener always called with resolved value and ctx');
+      })
+      .delay(350)
+      .then(() => {
+        debug('assert: not called again after stop called');
+        assert(spy.calledThrice, 'not called again after stop called');
+      });
+  });
+
+  it ('functions that delay resolve', function () {
+    this.timeout(10000);
+    let obj = Math.random();
+    let callback = sinon.spy(() => Promise.delay(1000, obj));
+    let listener = sinon.spy();
+    let ctx = backoff(callback);
+    ctx.on('resolved', listener);
+
+    return Promise.all([
+      Promise.delay(150)
+        .then(() => assert(callback.calledOnce, 'callback called once'))
+        .delay(1000)
+        .then(() => assert(callback.calledOnce, 'callback not called twice just yet'))
+        .delay(100) // backoff
+        .then(() => assert(callback.calledTwice, 'callback called twice'))
+        .delay(1000)
+        .then(() => assert(callback.calledTwice, 'callback not called thrice just yet'))
+        .delay(100) // backoff
+        .then(() => assert(callback.calledThrice, 'callback called thrice')),
+      Promise.delay(150)
+        .then(() => assert(listener.notCalled, '"resolved" listener not called yet'))
+        .delay(900)
+        .then(() => assert(listener.notCalled, '"resolved" listener not called just yet'))
+        .delay(100)
+        .then(() => assert(listener.calledOnce, '"resolved" listener called once'))
+        .delay(100) // backoff
+        .delay(900)
+        .then(() => assert(listener.calledOnce, '"resolved" listener not called twice just yet'))
+        .delay(100)
+        .then(() => assert(listener.calledTwice, '"resolved" listener called twice'))
+        .delay(100) // backoff
+        .delay(900)
+        .then(() => assert(listener.calledTwice, '"resolved" listener not called thrice just yet'))
+        .delay(100)
+        .then(() => assert(listener.calledThrice, '"resolved" listener called thrice'))
+        .then(() => assert(listener.alwaysCalledWithExactly(obj, ctx), '"resolved" listener always called with resolved value and ctx'))
+    ])
+    .then(() => {
+      ctx.stop();
+    })
+    .delay(1200)
+    .then(() => {
+      assert(callback.calledThrice, 'callback not called after stopped');
+      assert(listener.calledThrice, '"resolved" listener not called after stopped');
+    });
+  });
+
+});
