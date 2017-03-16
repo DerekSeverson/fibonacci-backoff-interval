@@ -1,12 +1,14 @@
 'use strict';
 
-let debug = require('debug')('buzzi:fibonacci-interval');
+let debug = require('debug')('fibonacci');
 let Promise = require('bluebird');
 let backoff = require('backoff');
 let EventEmitter = require('events');
 
 const DEFAULT_MAX_DELAY = 10000;
 const DEFAULT_MIN_DELAY = 100;
+
+const symstr = (sym) => sym.toString().match(/Symbol\((\w+)\)/)[1];
 
 exports = module.exports = function fibonacciBackoffInterval(fn, options = {}) {
 
@@ -23,7 +25,7 @@ exports = module.exports = function fibonacciBackoffInterval(fn, options = {}) {
   });
 
   const ctx = {};
-  ctx.status = () => status.toString();
+  ctx.status = () => symstr(status);
   ctx.start = function start() {
     debug('start');
     if (status === RUNNING) {
@@ -71,6 +73,8 @@ exports = module.exports = function fibonacciBackoffInterval(fn, options = {}) {
   });
 
   manager.on('ready', (number, delay) => {
+    if (status !== RUNNING) return;
+
     ++cycle;
 
     debug('ready: ', { cycle, number, delay });
@@ -81,6 +85,7 @@ exports = module.exports = function fibonacciBackoffInterval(fn, options = {}) {
         emitter.emit('resolved', obj, ctx);
         if (options.manual === true) return;
         ctx.reset();
+        ctx.backoff();
       },
       (err) => {
         emitter.emit('rejected', err, ctx);
@@ -91,7 +96,7 @@ exports = module.exports = function fibonacciBackoffInterval(fn, options = {}) {
   });
 
   // start  it!
-  if (options.start !== false) ctx.start();
+  if (options.start !== false) process.nextTick(() => ctx.start());
 
   return Object.freeze(ctx);
 };
