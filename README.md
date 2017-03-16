@@ -6,7 +6,7 @@ Fibonacci Backoff Interval with Promise Support
 ```javascript
 
 const Promise = require('bluebird');
-const backoff = require('backoff');
+const backoff = require('fibonacci-backoff-interval');
 
 let ctx = backoff((ctx) => {
   let value = Math.random();
